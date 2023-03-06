@@ -103,74 +103,79 @@
         if (audioPlaying) {
           audioSource.stop();
           audioPlaying = false;
+        } else {
+          mic.start();
+          fft.setInput(mic);
+          audioPlaying = true;
         }
-        mic.start();
-        fft.setInput(mic);
-        audioPlaying = true;
       };
 
       document.getElementById("uploadButton").onclick = function () {
+        document.getElementById("fileInput").click();
+      };
+
+      document.getElementById("fileInput").onchange = function (event) {
         if (audioPlaying) {
           audioSource.stop();
           audioPlaying = false;
         }
-        document.getElementById("fileInput").click();
-      };
-
-      kotlin;
-
-      document.getElementById("fileInput").onchange = function (event) {
         audioFile = event.target.files[0];
         audioSource = new p5.SoundFile(audioFile, function () {
           fft.setInput(audioSource);
-          audioSource.play();
           audioPlaying = true;
+          audioSource.play();
         });
       };
 
       class Shape {
         constructor(x, y, size) {
-          this.x = x;
-          this.y = y;
+          this.pos = createVector(x, y);
+          this.vel = createVector(random(-5, 5), random(-5, 5));
           this.size = size;
-          this.speedX = random(-10, 10);
-          this.speedY = random(-10, 10);
-          this.color = color(random(360), 255, 255);
-        }
-
-        move() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-          if (this.x < -this.size) {
-            this.x = width + this.size;
-          }
-          if (this.x > width + this.size) {
-            this.x = -this.size;
-          }
-          if (this.y < -this.size) {
-            this.y = height + this.size;
-          }
-          if (this.y > height + this.size) {
-            this.y = -this.size;
-          }
+          this.maxSize = size * 5;
+          this.alpha = 255;
         }
 
         display() {
-          fill(this.color);
-          ellipse(this.x, this.y, this.size, this.size);
+          fill(255, this.alpha);
+          ellipse(this.pos.x, this.pos.y, this.size);
+        }
+
+        move() {
+          this.pos.add(this.vel);
+
+          if (this.pos.x < 0 || this.pos.x > width) {
+            this.vel.x *= -1;
+          }
+          if (this.pos.y < 0 || this.pos.y > height) {
+            this.vel.y *= -1;
+          }
+
+          this.size = map(
+            this.pos.dist(createVector(width / 2, height / 2)),
+            0,
+            width / 2,
+            this.maxSize,
+            0
+          );
+
+          this.alpha = map(
+            this.pos.dist(createVector(width / 2, height / 2)),
+            0,
+            width / 2,
+            255,
+            0
+          );
         }
 
         explode() {
           let newShapes = [];
-          for (let i = 0; i < 3; i++) {
-            let newSize = this.size / 3;
-            let newShape = new Shape(this.x, this.y, newSize);
-            newShape.color = color(random(360), 255, 255);
-            newShape.speedX = random(-10, 10);
-            newShape.speedY = random(-10, 10);
-            newShapes.push(newShape);
+          for (let i = 0; i < 5; i++) {
+            let shape = new Shape(this.pos.x, this.pos.y, this.size / 2);
+            newShapes.push(shape);
           }
-          shapes.splice(shapes.indexOf(this), 1, ...newShapes);
+          shapes.splice(shapes.indexOf(this), 1);
+          shapes = shapes.concat(newShapes);
         }
       }
     </script>
