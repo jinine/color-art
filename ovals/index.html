@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Random Ovals</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #FFFFFF;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const colors = [
+        "#69626D",
+        "#BCAF9C",
+        "#CBBEB3",
+        "#D9BDC5",
+        "#E8C7DE",
+        "#BFD7FF",
+        "#E2FDFF",
+        "#9BB1FF",
+        "#788BFF",
+        "#5465FF",
+      ];
+
+      const ovals = [];
+
+      function animate() {
+        // Create a new oval
+        const oval = {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          width: 20 + Math.random() * 80,
+          height: 20 + Math.random() * 80,
+          blur: 10 + Math.random() * 10,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          age: 0,
+        };
+
+        // Add the oval to the list
+        ovals.push(oval);
+
+        // Remove the oldest oval if there are too many
+        if (ovals.length > 5) {
+          ovals.shift();
+        }
+
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw all the ovals
+        for (let i = 0; i < ovals.length; i++) {
+          const oval = ovals[i];
+
+          // Increase the age of the oval
+          oval.age++;
+
+          // Draw the oval
+          ctx.beginPath();
+          ctx.ellipse(
+            oval.x,
+            oval.y,
+            oval.width,
+            oval.height,
+            0,
+            0,
+            2 * Math.PI
+          );
+          ctx.fillStyle = oval.color;
+          ctx.shadowColor = oval.color;
+          ctx.shadowBlur = oval.blur;
+          ctx.fill();
+
+          // Remove the oval if it's too old
+          if (oval.age > 100) {
+            ovals.splice(i, 1);
+          }
+        }
+
+        // Call the animate function recursively
+        setTimeout(animate, 50); // Increase or decrease this value to change animation speed
+      }
+
+      // Set the canvas size to match the window size
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      // Resize the canvas when the window is resized
+      window.addEventListener("resize", resizeCanvas);
+
+      // Start the animation
+      animate();
+    </script>
+  </body>
+</html>

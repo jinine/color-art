@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Audio Input Line</title>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script>
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66'];
+      let colorIndex = 0;
+      
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioContext = new AudioContext();
+          const source = audioContext.createMediaStreamSource(stream);
+          const analyser = audioContext.createAnalyser();
+          source.connect(analyser);
+          analyser.fftSize = 2048;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          
+          function draw() {
+            requestAnimationFrame(draw);
+            analyser.getByteTimeDomainData(dataArray);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            for (let i = 0; i < bufferLength; i++) {
+              const x = i / bufferLength * canvas.width;
+              const y = dataArray[i] / 256 * canvas.height / 2;
+              ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = colors[colorIndex];
+            ctx.stroke();
+            colorIndex = (colorIndex + 1) % colors.length;
+          }
+          
+          draw();
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    </script>
+  </body>
+</html>

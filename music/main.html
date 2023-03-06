@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Audio Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      canvas {
+        display: block;
+      }
+      .button {
+        display: inline-block;
+        background-color: #4caf50;
+        color: white;
+        padding: 15px 25px;
+        text-align: center;
+        font-size: 16px;
+        margin: 20px;
+        cursor: pointer;
+      }
+      #fileInput {
+        display: none;
+      }
+      .shape {
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="button" id="recordButton">Record</button>
+    <input type="file" id="fileInput" />
+    <button class="button" id="uploadButton">Upload</button>
+    <script>
+      let mic, fft;
+      let audioFile,
+        audioSource,
+        audioPlaying = false;
+
+      let shapes = [];
+
+      function setup() {
+        createCanvas(windowWidth, windowHeight);
+        colorMode(HSB);
+        background(0);
+        noStroke();
+        angleMode(DEGREES);
+
+        for (let i = 0; i < 100; i++) {
+          shapes.push(
+            new Shape(random(width), random(height), random(50, 200))
+          );
+        }
+
+        mic = new p5.AudioIn();
+        fft = new p5.FFT();
+      }
+
+      function draw() {
+        background(0, 50);
+
+        for (let i = 0; i < shapes.length; i++) {
+          shapes[i].display();
+          shapes[i].move();
+        }
+
+        if (audioPlaying) {
+          let spectrum = fft.analyze();
+          noFill();
+          beginShape();
+          strokeWeight(4);
+          for (let i = 0; i < spectrum.length; i++) {
+            let angle = map(i, 0, spectrum.length, 0, 360);
+            let amp = spectrum[i];
+            let r = map(amp, 0, 256, 50, 300);
+            let x = r * cos(angle) + width / 2;
+            let y = r * sin(angle) + height / 2;
+            stroke((angle + frameCount) % 360, 255, 255);
+            vertex(x, y);
+          }
+          endShape(CLOSE);
+        }
+      }
+
+      function mousePressed() {
+        if (audioPlaying) {
+          audioSource.stop();
+          audioPlaying = false;
+        }
+        for (let i = 0; i < shapes.length; i++) {
+          shapes[i].explode();
+        }
+      }
+
+      document.getElementById("recordButton").onclick = function () {
+        if (audioPlaying) {
+          audioSource.stop();
+          audioPlaying = false;
+        }
+        mic.start();
+        fft.setInput(mic);
+        audioPlaying = true;
+      };
+
+      document.getElementById("uploadButton").onclick = function () {
+        if (audioPlaying) {
+          audioSource.stop();
+          audioPlaying = false;
+        }
+        document.getElementById("fileInput").click();
+      };
+
+      kotlin;
+
+      document.getElementById("fileInput").onchange = function (event) {
+        audioFile = event.target.files[0];
+        audioSource = new p5.SoundFile(audioFile, function () {
+          fft.setInput(audioSource);
+          audioSource.play();
+          audioPlaying = true;
+        });
+      };
+
+      class Shape {
+        constructor(x, y, size) {
+          this.x = x;
+          this.y = y;
+          this.size = size;
+          this.speedX = random(-10, 10);
+          this.speedY = random(-10, 10);
+          this.color = color(random(360), 255, 255);
+        }
+
+        move() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          if (this.x < -this.size) {
+            this.x = width + this.size;
+          }
+          if (this.x > width + this.size) {
+            this.x = -this.size;
+          }
+          if (this.y < -this.size) {
+            this.y = height + this.size;
+          }
+          if (this.y > height + this.size) {
+            this.y = -this.size;
+          }
+        }
+
+        display() {
+          fill(this.color);
+          ellipse(this.x, this.y, this.size, this.size);
+        }
+
+        explode() {
+          let newShapes = [];
+          for (let i = 0; i < 3; i++) {
+            let newSize = this.size / 3;
+            let newShape = new Shape(this.x, this.y, newSize);
+            newShape.color = color(random(360), 255, 255);
+            newShape.speedX = random(-10, 10);
+            newShape.speedY = random(-10, 10);
+            newShapes.push(newShape);
+          }
+          shapes.splice(shapes.indexOf(this), 1, ...newShapes);
+        }
+      }
+    </script>
+  </body>
+</html>
